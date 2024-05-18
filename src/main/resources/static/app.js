@@ -58,4 +58,28 @@ $(function () {
     $( "#connect" ).click(() => connect());
     $( "#disconnect" ).click(() => disconnect());
     $( "#send" ).click(() => sendName());
+
+    /**
+     * EventSource
+     *
+     * Vue3 lifecycle
+     * https://vuejs.org/guide/essentials/lifecycle#lifecycle-diagram
+     * https://vuejs.org/api/composition-api-lifecycle
+     */
+    // onBeforeMount/onMounted
+    const uid = Date.now().toString(16) + '-' + Math.random().toString(16).slice(2);
+    const source = new EventSource(`/sse/user/${uid}`);
+    source.addEventListener('message', (e) => {
+      console.log('Received message:', JSON.parse(e.data));
+    })
+
+    // onBeforeUnmount/onUnmounted
+    window.addEventListener('beforeunload', () => {
+        source.close();
+        fetch(`/sse/disconnect/${uid}`, {
+            method: 'post',
+        }).then(res => {
+            console.log("close", res);
+        }).catch(console.error);
+    })
 });
