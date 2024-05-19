@@ -67,16 +67,26 @@ $(function () {
      * https://vuejs.org/api/composition-api-lifecycle
      */
     // onBeforeMount/onMounted
-    const uid = Date.now().toString(16) + '-' + Math.random().toString(16).slice(2);
-    const source = new EventSource(`/sse/user/${uid}`);
+    const channel = '00001';
+    let connectId = '';
+    const source = new EventSource(`/sse/channel/${channel}`);
     source.addEventListener('message', (e) => {
-      console.log('Received message:', JSON.parse(e.data));
+      const res = JSON.parse(e.data);
+      console.log('Received message:', res);
+      if (res.type === 'CONNECT') {
+        connectId = res.id;
+      }
+    })
+
+    source.addEventListener('error', (err) => {
+        console.log('EventSource Error: ', err);
+        source.close();
     })
 
     // onBeforeUnmount/onUnmounted
     window.addEventListener('beforeunload', () => {
         source.close();
-        fetch(`/sse/disconnect/${uid}`, {
+        fetch(`/sse/disconnect/${connectId}`, {
             method: 'post',
         }).then(res => {
             console.log("close", res);
